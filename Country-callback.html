@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script type="text/javascript" src="https://gc.kis.v2.scr.kaspersky-labs.com/FD126C42-EBFA-4E12-B309-BB3FDD723AC1/main.js?attr=smI_U0u7YLt-Fh08y7AHux3KUHZ7DCvpRSs5wWfaDmShjd9qHRkTtVge1zoHAwboI6TPTRFGjwxBHh-HYlvHM1hMA8j-_GZfvDbH_etA72LJ7D1yatjyHOR_9bDPguh9ym4itvLeMYFHQC_6QzjIeTAk18rFqDAtSRKDqiwpv3vN51gKjg8gK3ssQu2oWRCKFLKE_kWQjTm3ukQ1PzxtEZi6lBjCarsXqHByw12-_3gfDMgimY3aSvPvYyP9nvVMghhjsHQ_hmH-Oc9MCuYS-qDCsCLxlfnUUSF9U-T4vAIJ6clyp8HTBnwXNqipiB9tmXAe0-Kl_Kh_I8cCh5VhhdDCawGEU7AWt1pzXO5F3do4CVThoSqXESItCiMgQ23GMATcWbZ4im_DLsxi8dLVkjPXj2degp5z083YhE4JZABgBPln0QWrTUQujfXfnZnv5AXe2uweZTBGFhmJ48mnFWXF0N1jaXZzkBReSh21UEeByIKpB4nWoVayG2GAv6CZZuyvvpmuW2HvHX-Tr9EycQpQcqouDL5N8Hwmcc9lFN_nidOoTEKvwoSJ2kRlB68Y3mpXG9pltJkzQhJy_C86hRoaOTtJell2T-NxV3nP1-onORIx2gjad6sRjOMipudQ3mwjOBq2pbU7LqqhwkeNbDk03GMVLIR1u-e7QoNsZSN8esQpWrSaKMWR3sNPnvaPnsc4jJmIf2g2tiyxbcwokvfiQk52B38YYEx6dKwKgEz4wb0FmGUUq4cpuvvsu695eg4YM__HDtoTnjPPAwJbNQ" charset="UTF-8"></script><style>
+        .col-2 img {
+            height: 120px;
+        }
+    </style>
+    <title>Document</title>
+</head>
+<body>
+    
+    <div class="container my-5">
+        <div class="card mb-3">
+            <div class="card-body">
+                <div class="input-group">
+                    <input id="txtSearch" type="text" class="form-control">
+                    <button id="btnSearch" type="button" class="btn btn-primary">Yükle</button>
+                </div>
+            </div>
+        </div>
+        <div class="card mb-3" id="country-details">
+            <!-- Gelecek olan ülke -->
+        </div>
+        <div class="card mb-3">
+            <div class="card-header">Komşu Ülkeler</div>
+            <div class="card-body">
+                <div class="row" id="neighbors">
+                    <!-- gelecek olan komşu bilgileri -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+   <script>
+
+    document.querySelector("#btnSearch").addEventListener("click", () => {
+        let text = document.querySelector("#txtSearch").value;
+        getCountry(text);
+    });
+
+    function getCountry(country) {
+        const request = new XMLHttpRequest();
+
+        request.open('GET', 'https://restcountries.com/v3.1/name/' + country);
+        request.send();
+
+        request.addEventListener('load', function() {
+            const data = JSON.parse(this.responseText);
+            console.log(data);            
+            renderCountry(data[0]);
+
+            const countries = data[0].borders.toString();
+
+            // load neighbors
+            const req = new XMLHttpRequest();
+            req.open('GET', 'https://restcountries.com/v3.1/alpha?codes=' + countries);
+            req.send();
+
+            req.addEventListener('load', function() {
+                const data = JSON.parse(this.responseText);
+                renderNeighbors(data);
+            });
+        });
+    }
+
+    function renderCountry(data) {        
+       
+        let html = `        
+            <div class="card-header">
+                    Arama Sonucu
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-4">
+                            <img src="${data.flags.png}" alt="" class="img-fluid">
+                        </div>
+                        <div class="col-8">
+                            <h3 class="card-title">${data.name.common}</h3>
+                            <hr>
+                            <div class="row">
+                                <div class="col-4">Nufüs: </div>
+                                <div class="col-8">${(data.population / 1000000).toFixed(1)} milyon</div>
+                            </div>
+                            <div class="row">
+                                <div class="col-4">Resmi Dil: </div>
+                                <div class="col-8">${Object.values(data.languages)}</div>
+                            </div>
+                            <div class="row">
+                                <div class="col-4">Başkent: </div>
+                                <div class="col-8">${data.capital[0]}</div>
+                            </div>
+                            <div class="row">
+                                <div class="col-4">Para Birimi: </div>
+                                <div class="col-8">${Object.values(data.currencies)[0].name} (${Object.values(data.currencies)[0].symbol})</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+        `;            
+
+
+        document.querySelector("#country-details").innerHTML = html;       
+    }
+     
+    function renderNeighbors(data) {
+        console.log(data);
+        let html = "";
+        for(let country of data) {
+            html += `
+                <div class="col-2 mt-2">
+                    <div class="card">
+                        <img src="${country.flags.png}" class="card-img-top">
+                        <div class="card-body">
+                            <h6 class="card-title">${country.name.common}</h6>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+        }
+        document.querySelector("#neighbors").innerHTML =  html;
+    }
+   </script>
+    
+</body>
+</html>

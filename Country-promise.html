@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script type="text/javascript" src="https://gc.kis.v2.scr.kaspersky-labs.com/FD126C42-EBFA-4E12-B309-BB3FDD723AC1/main.js?attr=ASsB9ihjSzIihl5EC2Rq-_3TOOcXljc-N1q4F3BOTev08BtzhkP_NWn74g8YZUq-yP9nU8uC8JO4gs2c4sBK782RKYrgekz3zIi4M6IglRPosHB_7Gd6bLmIiFk_IVQSvanhkNjPNc7rj63EMTYFMgC4gLOpMR65PlxD2mGUUrDj_7HyhZas1q3l-Cs145X8ndnOvVSN0Kw3iJQ-LDiUIQIq8h3NWBDstZFUYXaQPjKeccL8ZRmVeA1VnQ8idAbiKbBA5zJkE2t2XAuRoJACQms3yjk4Gh0a-dR5Ibnc1P3xvlszQvoZq5TPo-VU3cZWk41bDLzce9b2SBBp9Bfv14Djo9H7TESbxrdm2V_s-jNUQ0EkeONXw0KfITSPsJhvL9FKGKwyY_hBTFk2OMqhm0X3cud6Gq358tSZSEdYWx76CYB2ICvBHMdQI6xDIH0hJ5EEzXZnkaUTLwEIkV0n8kTybFwlYsKt9Vogf1jzjdSgXRGcN9vjySgeIYTeC3jkWuByqO00vqRifl7RwkD8RWpM9CkHDLMxspHzyxleY8W1MyEl24gf2ukQuOAJ9t6XhAARyh0YH-VGzAbme0LGOAtWF-zqo4pKAY3IqudBxLnfEDrvshhMMIx5iGxoS4o17__O-ywfOdKBPu3Rn7footAbft9SYz7kDlW0Nh73ygzsd_1bTbbXYc56zC-yXYyvAHXjmuuIgmmDb8KnC6YHGa2tKZY2vCXCs3SUtPFiyA5ryjxD7vUfzrytQRsD8wav4heUzFDBNpBSSmq0pLkzlQ" charset="UTF-8"></script><style>
+        .col-2 img {
+            height: 120px;
+        }
+        #details {
+            opacity: 0;
+        }
+    </style>
+    <title>Document</title>
+</head>
+<body>
+    
+    <div class="container my-5">
+        <div id="errors"></div>
+        <div class="card mb-3">
+            <div class="card-body">
+                <div class="input-group">
+                    <input id="txtSearch" type="text" class="form-control">
+                    <button id="btnSearch" type="button" class="btn btn-primary">Yükle</button>
+                </div>
+            </div>
+        </div>
+        <div id="details">        
+            <div class="card mb-3" >
+                <div class="card-header">Arama Sonucu</div>
+                <div class="card-body">
+                    <div class="row" id="country-details">
+
+                    </div>
+                </div>
+            </div>
+            <div class="card mb-3">
+                <div class="card-header">Komşu Ülkeler</div>
+                <div class="card-body">
+                    <div class="row" id="neighbors">
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+   <script>
+
+    document.querySelector("#btnSearch").addEventListener("click", () => {
+        let text = document.querySelector("#txtSearch").value;
+        document.querySelector("#details").style.opacity = 0;
+        getCountry(text);
+    });
+
+    function getCountry(country) {
+        fetch('https://restcountries.com/v3.1/name/' + country)
+            .then((response) => {
+                if(!response.ok)
+                    throw new Error("ülke bulunamadı");
+                return response.json()
+            })
+            .then((data) => {
+                renderCountry(data[0]);
+                const countries = data[0].borders;
+
+                if(!countries) 
+                    throw new Error("komşu ülke bulunamadı.");
+            
+
+                return fetch('https://restcountries.com/v3.1/alpha?codes=' + countries.toString());
+            })
+            .then(response => response.json())
+            .then((data) => renderNeighbors(data))
+            .catch(err => renderError(err));
+    }
+
+    function renderCountry(data) {        
+        document.querySelector("#country-details").innerHTML = "";
+        document.querySelector("#neighbors").innerHTML = "";
+       
+        let html = `                   
+                <div class="col-4">
+                    <img src="${data.flags.png}" alt="" class="img-fluid">
+                </div>
+                <div class="col-8">
+                    <h3 class="card-title">${data.name.common}</h3>
+                    <hr>
+                    <div class="row">
+                        <div class="col-4">Nufüs: </div>
+                        <div class="col-8">${(data.population / 1000000).toFixed(1)} milyon</div>
+                    </div>
+                    <div class="row">
+                        <div class="col-4">Resmi Dil: </div>
+                        <div class="col-8">${Object.values(data.languages)}</div>
+                    </div>
+                    <div class="row">
+                        <div class="col-4">Başkent: </div>
+                        <div class="col-8">${data.capital[0]}</div>
+                    </div>
+                    <div class="row">
+                        <div class="col-4">Para Birimi: </div>
+                        <div class="col-8">${Object.values(data.currencies)[0].name} (${Object.values(data.currencies)[0].symbol})</div>
+                    </div>
+                </div>
+        `;            
+
+        document.querySelector("#details").style.opacity = 1;
+        document.querySelector("#country-details").innerHTML = html;       
+    }
+     
+    function renderNeighbors(data) {
+        console.log(data);
+        let html = "";
+        for(let country of data) {
+            html += `
+                <div class="col-2 mt-2">
+                    <div class="card">
+                        <img src="${country.flags.png}" class="card-img-top">
+                        <div class="card-body">
+                            <h6 class="card-title">${country.name.common}</h6>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+        }
+        document.querySelector("#neighbors").innerHTML =  html;
+    }
+   
+    function renderError(err) {
+        const html = `
+            <div class="alert alert-danger">
+                ${err.message}
+            </div>
+        `;
+        setTimeout(function() {
+            document.querySelector("#errors").innerHTML = "";
+        }, 3000);
+        document.querySelector("#errors").innerHTML = html;
+    }
+   </script>
+    
+</body>
+</html>
